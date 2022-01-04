@@ -14,6 +14,13 @@ from scapy.utils import PcapWriter
 sys.setrecursionlimit(30000)
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)#supress Scapy warnings`
 
+# sudo python pholus3.py  ens32 -4 -s4 "192.168.1.237" -qu -googlecast 
+# python pholus3.py  ens35 -rq -4 -s4 "192.168.77.237" -query  "_googlecast._tcp.local." -qu -rdns_scanning true -sscan  -fl -flooding-interval 10
+# python pholus3.py  ens35 -4 -rq -qtype PTR -query _googlecast._tcp -stimeout 300 -fl -flooding-interval 10 
+# python pholus3.py  ens35 -4 -rq -qtype PTR -query _googlecast._tcp -qu  -stimeout 300 -fl -flooding-interval 10 
+# python pholus3.py  ens35 -4 -rq -qtype PTR -query Chromecast-1b03a487e0551d8d45a059906446bb79._googlecast._tcp. -qu -d4 192.168.77.44 -stimeout 300 -fl -flooding-interval 10 
+# python pholus3.py  ens35 -4 -rq -qtype PTR -query _googlecast._tcp. -qu -d4 192.168.77.44 -stimeout 300 -fl -flooding-interval 10 
+
 ######################################
 ### OBTAIN THE SYSTEM IPV6 ADDRESS ###
 ######################################
@@ -27,8 +34,8 @@ def get_my_ipv6_addr(interface):
                 elif myip[0:6] == "fe80::":
                     myip=ifaces[0]
         return myip
-    except:
-        print("The interface",interface,"does not exist. Please, try again.")
+    except Exception as e:
+        print(f"The interface {interface} does not exist, {str(e)}")
         exit(0)
 
 ######################################
@@ -430,10 +437,8 @@ def ext_handler(packets,queue,unidns,show_ttl,print_res,dos_ttl,conflict,ttl,int
                         elif block.haslayer(DNSRR):
                             while isinstance(block,DNSRR):#Somewhat equivalent: while not isinstance(an, NoPayload):
                                 dnsrr=block.getlayer(DNSRR)
-                                if dnsrr.rclass==32769:
-                                    res = res0 + " DNS Resource Record: "+ dnsrr.rrname + " " + dns_type[dnsrr.type] +" QU Class:IN "+dnsrr.rdata
-                                elif dnsrr.rclass==1:
-                                    res = res0 + " DNS Resource Record: "+dnsrr.rrname + " "+ dns_type[dnsrr.type] + " QM Class:IN "+dnsrr.rdata
+                                if dnsrr.rclass in (32769, 1):
+                                    res = f"{res0} DNS Resource Record: {dnsrr.rrname} {dns_type[dnsrr.type]} QU Class:IN  {dnsrr.rdata}"
                                 elif dnsrr.qclass==255:
                                     res = res0 + " Question: "+dnsrr.qname + " "+ dns_type[dnsrr.qtype] + " QM Class:ANY"
                                 else:
@@ -454,7 +459,7 @@ def ext_handler(packets,queue,unidns,show_ttl,print_res,dos_ttl,conflict,ttl,int
                                     if "._tcp." not in rdata and "._udp." not in rdata:
                                         if rdata == "_dhnap.":
                                             rdata=rdata+"_tcp."
-                                    res = res0 + " Additional_Record: "+dnsrr.rrname + " " + dns_type[dnsrr.type]+" " + str(dnsrr.rclass) + ' "' +rdata+'"'
+                                    res = f"{res0} Additional_Record: {dnsrr.rrname} {dns_type[dnsrr.type]} {dnsrr.rclass} {rdata}"
                                 if show_ttl:
                                     res = res + " TTL:"+str(dnsrr.ttl)
                                 if print_res==1:
@@ -673,6 +678,8 @@ def main():
     parser.add_argument('-flooding-interval','--interval-of-flooding', action="store", dest="flooding_interval", default=1, help="the interval between packets when flooding the targets")
     parser.add_argument('-ftimeout','--flooding_timeout', action="store", dest="flooding_timeout", default=200, help="The time (in seconds) to flood your target.")
     values = parser.parse_args()
+
+    # print(scapy.interfaces.get_if_list())
 
     if values.rpcap:
         print("Read packets from a pcap file")
