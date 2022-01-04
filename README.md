@@ -34,3 +34,5 @@ use --help to identify specific spoofing capabilities for MiTM purposes, eg -pri
   
 ## Read a pcap file and pring mDNS info (no sudo/root required)
 python pholus3.py ../mdns_traffic.pcap --readpcap
+  
+### [Related slides](https://conference.hitb.org/hitbsecconf2017ams/materials/D2T2%20-%20Antonios%20Atlasis%20-%20An%20Attack-in-Depth%20Analysis%20of%20Multicast%20DNS%20and%20DNS%20Service%20Discovery.pdf)
